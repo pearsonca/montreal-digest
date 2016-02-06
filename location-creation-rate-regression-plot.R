@@ -32,10 +32,10 @@ src <- readRDS(args[1])
 #     geom_bar(stat="identity", width=1)
 # )
 
-src[,
+ref <- src[,
   list(
-    creation_day = (arrive/60/60) %/% 24),
-    shutdown_day = (arrive/60/60) %/% 24)
+    creation_day = (arrive/60/60) %/% 24,
+    shutdown_day = (arrive/60/60) %/% 24
   ),
   by=location_id
 ][,
@@ -46,16 +46,18 @@ src[,
 ]
 
 zeros <- data.table(
-  creation_day = 0:max(src$creation_day),
+  creation_day = 0:max(ref$creation_day),
   N = 0,
   key = "creation_day"
 )
-creations <- merge(src, zeros, all=TRUE)[,
+creations <- merge(ref, zeros, all=TRUE)[,
   list(N = max(N.x, N.y, na.rm=T)),
   keyby = creation_day
 ]
 
-ggplot(creations) + theme_bw() +
-  aes(x=creation_day, y=N) +
-  labs(x="creation day", y="hotspots created")
-  stat_smooth(method="lm") + geom_point() +
+.ign <- ggsave(args[2], 
+  ggplot(creations) + theme_bw() +
+    aes(x=creation_day, y=N) +
+    stat_smooth(method = "glm") + geom_point() +
+    labs(x="creation day", y="hotspots created")
+)
