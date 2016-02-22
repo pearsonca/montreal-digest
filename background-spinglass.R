@@ -77,4 +77,4 @@ resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(s
   }), mc.cores = crs)
 }
 
-resolve(raw.dt, intervalDays, windowDays, mxinc = 15)
+resolve(raw.dt, intervalDays, windowDays)
