@@ -39,8 +39,11 @@ emptygraph <- data.table(user_id=integer(), community=integer())
 
 resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(start/60/60/24)]) {
   n <- min(ceiling(base.dt[,(max(end)-min(start))/60/60/24]/intDays), mxinc, na.rm = TRUE)
+  targets <- 1:n
+  completed <- as.integer(gsub(".rds","",list.files(gsub("\\.rds","", outfile))))
+  want <- targets[c(-completed,-(n+1))]
   #  system.time(
-  mclapply(1:n, function(inc) with(slice(base.dt, st + inc*intDays-winDays, st + inc*intDays), {
+  mclapply(want, function(inc) with(slice(base.dt, st + inc*intDays-winDays, st + inc*intDays), {
     resfile <- gsub("\\.rds",sprintf("/%02d.rds",inc), outfile)
     if (dim(res)[1] == 0) {
       store <- emptygraph
