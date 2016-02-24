@@ -9,32 +9,28 @@ require(parallel)
 rm(list=ls())
 
 args <- commandArgs(trailingOnly = T)
-# args <- c("input/background-clusters/spin-glass/30-30.rds", "10")
+# args <- c("input/background-clusters/spin-glass/30-30.rds")
 
 precomms <- readRDS(args[1])
-target <- as.integer(args[2])
-precomms[interval == target, .N, by=list(community)]
-precomms[interval == target, {
-    
-    tmp <- combn(user_id, 2)
-    list(user.a = tmp[1,], user.b = tmp[2,])
-  },
-  by=list(community)
-]
+n <- precomms[,max(interval)]
+# precomms[interval == target, .N, by=list(community)]
+# precomms[interval < target, {
+#     
+#     tmp <- combn(user_id, 2)
+#     list(user.a = tmp[1,], user.b = tmp[2,])
+#   },
+#   by=list(community)
+# ]
 # for each interval
 
 # maxint <- max(precomms$interval)
-system.time(thing <- precomms[interval < 5, {
-    tmp <- combn(user_id, 2)
-    list(user.a = tmp[1,], user.b = tmp[2,])
-  },
-  by=list(interval, community)
-], gcFirst = T)
 
-system.time(thing <- rbindlist(mclapply(1:4, function(ntrvl){
-  precomms[interval == ntrvl, {
+crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
+
+mclapply(1:n, function(ntrvl){
+  saveRDS(precomms[interval == ntrvl, {
     tmp <- combn(user_id, 2)
-    list(user.a = tmp[1,], user.b = tmp[2,])
+    list(user.a = tmp[1,], user.b = tmp[2,], interval, score = 1)
   },
-  by=list(community)]
-}, mc.cores = detectCores()-1)))
+  by=list(community)], sub("\\.rds",sprintf("-agg-%02d.rds", ntrvl), args[1]))
+}, mc.cores = crs)
