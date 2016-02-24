@@ -13,6 +13,7 @@ args <- commandArgs(trailingOnly = T)
 
 precomms <- readRDS(args[1])
 n <- precomms[,max(interval)]
+# n <- 10
 # precomms[interval == target, .N, by=list(community)]
 # precomms[interval < target, {
 #     
@@ -30,7 +31,7 @@ crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
 mclapply(1:n, function(ntrvl){
   saveRDS(precomms[interval == ntrvl, {
     tmp <- combn(user_id, 2)
-    list(user.a = tmp[1,], user.b = tmp[2,], interval, score = 1)
+    list(user.a = tmp[1,], user.b = tmp[2,], interval=ntrvl, score = 1)
   },
-  by=list(community)], sub("\\.rds",sprintf("-agg-%02d.rds", ntrvl), args[1]))
+  by=list(community)], sub("\\.rds",sprintf("-acc/agg-%02d.rds", ntrvl), args[1]))
 }, mc.cores = crs)
