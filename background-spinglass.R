@@ -1,28 +1,11 @@
 #!/usr/bin/env Rscript
 ## read in raw input
 
+rm(list=ls())
+
 require(data.table)
 require(igraph)
 require(parallel)
-
-rm(list=ls())
-
-args <- commandArgs(trailingOnly = T)
-# args <- c("input/raw-pairs.rds", "30", "30", "input/background-clusters/spin-glass/30-30.rds")
-if (length(args)<4) stop("too few arguments to background-spinglass.R: ", args)
-
-raw.dt <- readRDS(args[1])
-raw.dt[
-  user.b < user.a,
-  `:=`(user.b = user.a, user.a = user.b)
-]
-setkey(raw.dt, start, end, user.a, user.b)
-
-intervalDays <- as.integer(args[2])
-windowDays <- as.integer(args[3])
-outfile <- args[4]
-
-crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
 
 slice <- function(dt, low, high) {
   sub <- dt[start < high*24*3600 & low*24*3600 < end,.N,by=list(user.a, user.b)]
@@ -68,6 +51,12 @@ resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(s
         lapply(an, function(tr) {
           ggs <- induced_subgraph(gg, which(comps$membership == tr))
           cs <- cluster_spinglass(ggs)
+          redn <- sum(sizes(cs)==1)
+          while(redn != 0) {
+            newn <- length(cs)-redn
+            cs <- cluster_spinglass(ggs, spins = newn)
+            redn <- sum(sizes(cs)==1)
+          }
           communities(cs)
         }),
         init
@@ -80,4 +69,21 @@ resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(s
   }), mc.cores = crs)
 }
 
-resolve(raw.dt, intervalDays, windowDays)
+args <- commandArgs(trailingOnly = T)
+# args <- c("input/raw-pairs.rds", "30", "30", "input/background-clusters/spin-glass/30-30.rds")
+if (length(args)<4) stop("too few arguments to background-spinglass.R: ", args)
+
+raw.dt <- readRDS(args[1])
+raw.dt[
+  user.b < user.a,
+  `:=`(user.b = user.a, user.a = user.b)
+  ]
+setkey(raw.dt, start, end, user.a, user.b)
+
+intervalDays <- as.integer(args[2])
+windowDays <- as.integer(args[3])
+outfile <- args[4]
+
+crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
+
+resolve(raw.dt, intervalDays, windowDays, mxinc = 20)
