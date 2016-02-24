@@ -86,4 +86,4 @@ outfile <- args[4]
 
 crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
 
-resolve(raw.dt, intervalDays, windowDays, mxinc = 20)
+resolve(raw.dt, intervalDays, windowDays)
