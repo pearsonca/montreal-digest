@@ -71,19 +71,23 @@ resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(s
 
 args <- commandArgs(trailingOnly = T)
 # args <- c("input/raw-pairs.rds", "30", "30", "input/background-clusters/spin-glass/30-30.rds")
-if (length(args)<4) stop("too few arguments to background-spinglass.R: ", args)
+if (length(args)<4) {
+  stop("too few arguments to background-spinglass.R: ", args)
+} else {
+  print(args)
+}
 
-raw.dt <- readRDS(args[1])
-raw.dt[
-  user.b < user.a,
-  `:=`(user.b = user.a, user.a = user.b)
-  ]
-setkey(raw.dt, start, end, user.a, user.b)
-
-intervalDays <- as.integer(args[2])
-windowDays <- as.integer(args[3])
-outfile <- args[4]
-
-crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
-
-resolve(raw.dt, intervalDays, windowDays)
+# raw.dt <- readRDS(args[1])
+# raw.dt[
+#   user.b < user.a,
+#   `:=`(user.b = user.a, user.a = user.b)
+#   ]
+# setkey(raw.dt, start, end, user.a, user.b)
+# 
+# intervalDays <- as.integer(args[2])
+# windowDays <- as.integer(args[3])
+# outfile <- args[4]
+# 
+# crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
+# 
+# resolve(raw.dt, intervalDays, windowDays)
