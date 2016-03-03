@@ -20,14 +20,13 @@ slice <- function(dt, low, high) {
 
 emptygraph <- data.table(user_id=integer(), community=integer())
 
-resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(start/60/60/24)]) {
+resolve <- function(base.dt, intDays, winDays, outputdir, mxinc=NA, st = base.dt[1, floor(start/60/60/24)]) {
   n <- min(ceiling(base.dt[,(max(end)-min(start))/60/60/24]/intDays), mxinc, na.rm = TRUE)
   targets <- 1:n
-  completed <- as.integer(gsub(".rds","",list.files(gsub("\\.rds","", outfile))))
+  completed <- as.integer(gsub(".rds","", list.files(outputdir, "rds") ))
   want <- targets[c(-completed,-(n+1))]
   #  system.time(
   mclapply(want, function(inc) with(slice(base.dt, st + inc*intDays-winDays, st + inc*intDays), {
-    resfile <- gsub("\\.rds",sprintf("/%02d.rds",inc), outfile)
     if (dim(res)[1] == 0) {
       store <- emptygraph
     } else {
@@ -62,6 +61,8 @@ resolve <- function(base.dt, intDays, winDays, mxinc=NA, st = base.dt[1, floor(s
         init
       )
     }
+    resfile <- sprintf("%s/%02d.rds", outputdir, inc)
+    cat("finishing",resfile,"\n")
     saveRDS(
       store,
       resfile
@@ -73,21 +74,19 @@ args <- commandArgs(trailingOnly = T)
 # args <- c("input/raw-pairs.rds", "30", "30", "input/background-clusters/spin-glass/30-30.rds")
 if (length(args)<4) {
   stop("too few arguments to background-spinglass.R: ", args)
-} else {
-  print(args)
 }
 
-# raw.dt <- readRDS(args[1])
-# raw.dt[
-#   user.b < user.a,
-#   `:=`(user.b = user.a, user.a = user.b)
-#   ]
-# setkey(raw.dt, start, end, user.a, user.b)
-# 
-# intervalDays <- as.integer(args[2])
-# windowDays <- as.integer(args[3])
-# outfile <- args[4]
-# 
-# crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
-# 
-# resolve(raw.dt, intervalDays, windowDays)
+raw.dt <- readRDS(args[1])
+raw.dt[
+  user.b < user.a,
+  `:=`(user.b = user.a, user.a = user.b)
+  ]
+setkey(raw.dt, start, end, user.a, user.b)
+
+intervalDays <- as.integer(args[2])
+windowDays <- as.integer(args[3])
+outdir <- args[4]
+
+crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
+ 
+resolve(raw.dt, intervalDays, windowDays, outdir)
