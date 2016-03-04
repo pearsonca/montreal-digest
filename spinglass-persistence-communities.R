@@ -25,7 +25,7 @@ resolve <- function(base.dt, outputdir, mxinc=base.dt[,max(interval)]) {
   want <- targets[c(-completed,-(mxinc+1))]
   #  exclude dones
   #  system.time(
-  mclapply(want, function(inc) with(remap(base.dt[interval==inc]), {
+  if (length(want)) mclapply(want, function(inc) with(remap(base.dt[interval==inc]), {
     if (dim(res)[1] == 0) {
       store <- emptygraph
     } else {
