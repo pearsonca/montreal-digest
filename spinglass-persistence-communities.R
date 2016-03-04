@@ -19,13 +19,7 @@ remap <- function(dt) {
 
 emptygraph <- data.table(user_id=integer(), community=integer())
 
-resolve <- function(base.dt, outputdir, mxinc=base.dt[,max(interval)]) {
-  targets <- 1:mxinc
-  completed <- as.integer(gsub(".rds","", list.files(outputdir, "rds") ))
-  want <- targets[c(-completed,-(mxinc+1))]
-  #  exclude dones
-  #  system.time(
-  if (length(want)) mclapply(want, function(inc) with(remap(base.dt[interval==inc]), {
+resolve <- function(base.dt, output) with(remap(base.dt), {
     if (dim(res)[1] == 0) {
       store <- emptygraph
     } else {
@@ -60,30 +54,26 @@ resolve <- function(base.dt, outputdir, mxinc=base.dt[,max(interval)]) {
         init
       )
     }
-    resfile <- sprintf("%s/%02d.rds", outputdir, inc)
-    cat("finishing",resfile,"\n")
+    cat("finishing",output,"\n")
     saveRDS(
       store,
-      resfile
+      output
     )
-  }),
-  mc.cores = min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T),
-  mc.allow.recursive = FALSE)
-}
+})
 
 args <- commandArgs(trailingOnly = T)
-# args <- c("input/background-clusters/spin-glass/30-30-acc.rds", "input/background-clusters/spin-glass/30-30-pc")
-if (length(args)<2) {
+# args <- c("input/background-clusters/spin-glass/30-15-pc/01.rds")
+if (length(args)<1) {
   stop("too few arguments to spinglass-persistence-communities.R: ", args)
 }
 
-raw.dt <- readRDS(args[1])
+raw.dt <- readRDS(sub("pc/","acc/",args[1]))
 raw.dt[
   user.b < user.a,
   `:=`(user.b = user.a, user.a = user.b)
   ]
 setkey(raw.dt, interval, user.a, user.b)
 
-tardir <-args[2]
+targetfile <- args[1]
  
-resolve(raw.dt, tardir)
+resolve(raw.dt, targetfile)
