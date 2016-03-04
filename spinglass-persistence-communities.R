@@ -20,7 +20,9 @@ remap <- function(dt) {
 emptygraph <- data.table(user_id=integer(), community=integer())
 
 resolve <- function(base.dt, outputdir, mxinc=base.dt[,max(interval)]) {
-  want <- 1:mxinc
+  targets <- 1:mxinc
+  completed <- as.integer(gsub(".rds","", list.files(outputdir, "rds") ))
+  want <- targets[c(-completed,-(n+1))]
   #  exclude dones
   #  system.time(
   mclapply(want, function(inc) with(remap(base.dt[interval==inc]), {
