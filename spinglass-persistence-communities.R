@@ -66,7 +66,9 @@ resolve <- function(base.dt, outputdir, mxinc=base.dt[,max(interval)]) {
       store,
       resfile
     )
-  }), mc.cores = crs)
+  }),
+  mc.cores = min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T),
+  mc.allow.recursive = FALSE)
 }
 
 args <- commandArgs(trailingOnly = T)
@@ -83,7 +85,5 @@ raw.dt[
 setkey(raw.dt, interval, user.a, user.b)
 
 tardir <-args[2]
-
-crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
  
 resolve(raw.dt, tardir)
