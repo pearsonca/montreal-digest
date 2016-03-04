@@ -84,4 +84,4 @@ tardir <-args[2]
 
 crs <- min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores(), na.rm = T)
  
-resolve(raw.dt, tardir, mxinc = 5)
+resolve(raw.dt, tardir)
