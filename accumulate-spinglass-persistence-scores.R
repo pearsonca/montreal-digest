@@ -2,31 +2,68 @@
 ## read in raw input
 
 # setwd(sprintf("%s/muri-overall", Sys.getenv("GITPROJHOME")))
+rm(list=ls())
+
 require(data.table)
 require(igraph)
 require(parallel)
+require(optparse)
 
-rm(list=ls())
+filelister <- function(dir) list.files(dir, "^\\d+.rds$", full.names = T)
 
-args <- commandArgs(trailingOnly = T)
-# args <- c("input/background-clusters/spin-glass/30-30-acc", "input/background-clusters/spin-glass/30-30-acc.rds")
-tardir <- args[1]
-scorefiles <- list.files(tardir, "^\\d+.rds$", full.names = T)
-
-disc <- 0.9
-censor <- disc^6 # i.e., no activity in six months
-
-readIn <- function(fn) readRDS(fn)[,score,keyby=list(user.a,user.b,interval)]
-storeres <- function(dt, was) {
-  saveRDS(dt, sub(".rds","-acc.rds", was))
-  dt
+parse_args <- function(argv = commandArgs(trailingOnly = T)) {
+  parser <- optparse::OptionParser(
+    usage = "usage: %prog path/to/input-useratob-scores/ path/to/accumulated-useratob-scores/",
+    description = "convert (community X, user.a in community X, user.b in community X, 1) at interval k, to (...) cumulated up to interval k.",
+    option_list = list(
+      optparse::make_option(
+        c("--verbose","-v"),  action="store_true", default = FALSE,
+        help="verbose?"
+      ),
+      optparse::make_option(
+        c("--discount","-d"), default = 0.9,
+        help="the discount rate for scores from previous interval."
+      ),
+      optparse::make_option(
+        c("--censor","-c"), default = 6,
+        help="the equivalent number of score-less intervals to consider before dropping a link."
+      )
+    )
+  )
+  req_pos <- list(inputfiles=filelister, outputdir=identity)
+  parsed <- optparse::parse_args(parser, argv, positional_arguments = length(req_pos))
+  parsed$options$help <- NULL
+  result <- c(mapply(function(f,c) f(c), req_pos, parsed$args, SIMPLIFY = F), parsed$options)
+  result$storeres <- function(dt, was) {
+    saveRDS(dt, sub(parsed$args[1], parsed$args[2], was))
+    dt
+  }
+  
+  if(result$verbose) print(result)
+  result
 }
 
-Reduce(function(prev, cur.filename) {
-  newres <- rbind(readIn(cur.filename), prev[, score := score*disc ])
-  ntrvl <- newres[,max(interval)]
-  storeres(newres[,list(interval=ntrvl, score = sum(score)), keyby=list(user.a, user.b)][score > censor], cur.filename)
-}, scorefiles[-1], storeres(readIn(scorefiles[1]), scorefiles[1]))
+clargs <- parse_args(
+  c("input/background-clusters/spin-glass/acc-30-30", "input/background-clusters/spin-glass/agg-30-30", "-v") # uncomment to debug
+)
 
-accfiles <- list.files(tardir, "acc", full.names = T)
-saveRDS(rbindlist(lapply(accfiles, readRDS)), args[2])
+readIn <- function(fn) {
+  res <- readRDS(fn)[,score,by=list(user.a, user.b)]
+  res[
+    user.b < user.a,
+    `:=`(user.b = user.a, user.a = user.b)
+  ]
+  res
+}
+
+with(clargs,{
+  censor_score <- discount^censor
+  Reduce(
+    function(prev, currentfn) {
+      newres <- rbind(readIn(currentfn), prev[, score := score*discount ])
+      storeres(newres[,list(score = sum(score)), keyby=list(user.a, user.b)][score > censor_score], currentfn)
+    },
+    inputfiles[-1],
+    storeres(readIn(inputfiles[1]), inputfiles[1])
+  )
+})
