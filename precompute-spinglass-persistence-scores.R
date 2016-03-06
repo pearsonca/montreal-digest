@@ -9,7 +9,7 @@ require(parallel)
 rm(list=ls())
 
 args <- commandArgs(trailingOnly = T)
-# args <- c("input/background-clusters/spin-glass/30-30-base.rds","input/background-clusters/spin-glass/30-30-acc")
+# args <- c("input/background-clusters/spin-glass/30-30","input/background-clusters/spin-glass/30-30-acc/01.rds")
 
 precomms <- readRDS(args[1])
 n <- precomms[,max(interval)]
