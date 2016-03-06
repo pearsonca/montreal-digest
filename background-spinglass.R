@@ -71,6 +71,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   )
   req_pos <- list(base.dt=rawReader, intDays=as.integer, winDays=as.integer, outputdir=identity)
   parsed <- optparse::parse_args(parser, argv, positional_arguments = length(req_pos))
+  parsed$options$help <- NULL
   result <- c(mapply(function(f,c) f(c), req_pos, parsed$args, SIMPLIFY = F), parsed$options)
   if(result$verbose) print(result)
   result

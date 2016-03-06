@@ -1,14 +1,17 @@
 
 relabeller <- function(dt) {
-  remap_ids <- setkey(dt[,list(user_id=unique(c(user.a,user.b)))], user_id)[, new_user_id := .GRP, by=user_id]
-  relabelled <- data.table(
-    user.a=remap_ids[dt[,list(user_id=user.a)]]$new_user_id,
-    user.b=remap_ids[dt[,list(user_id=user.b)]]$new_user_id
-  )
-  for (nm in grep("user", names(dt), invert = T, value = T)) {
-    relabelled[[nm]] <- dt[[nm]]
-  }
-  list(res=relabelled, mp=remap_ids)
+  ret <- if (dim(dt)[1]) {
+    remap_ids <- setkey(dt[,list(user_id=unique(c(user.a,user.b)))], user_id)[, new_user_id := .GRP, by=user_id]
+    relabelled <- data.table(
+      user.a=remap_ids[dt[,list(user_id=user.a)]]$new_user_id,
+      user.b=remap_ids[dt[,list(user_id=user.b)]]$new_user_id
+    )
+    for (nm in grep("user", names(dt), invert = T, value = T)) {
+      relabelled[[nm]] <- dt[[nm]]
+    }
+    list(res=relabelled, mp=remap_ids)
+  } else list(res=dt, mp=data.table(user_id=integer(0), new_user_id=integer(0)))
+  ret
 }
 
 ## - make the user.a <=> user.b graph, gg
@@ -38,13 +41,15 @@ basicGraphPartition <- function(res, ulim=60) {
 }
 
 targettedGraphPartition <- function(target, grp, compnts) {
-  origs <- which(compnts$membership == target)
-  ggs <- induced_subgraph(grp, origs)
-  cs <- cluster_spinglass(ggs)
+  origs <- which(compnts$membership == target) # which vertices are we decomposing into communities?
+  ggs <- induced_subgraph(grp, origs) # get subgraph; n.b.: this re-indexes vertices
+  cs <- cluster_spinglass(ggs) # find spin-glass communities
   while(redn <- sum(sizes(cs)==1)) {
+    # if communities of size 1 are identified, re-spinglass with fewer spins
+    # until all communities are size > 1
     cs <- cluster_spinglass(ggs, spins = length(cs)-redn)
   }
-  lapply(communities(cs), function(comm) origs[comm])
+  lapply(communities(cs), function(comm) origs[comm]) # so convert them back to original indices
 }
 
 ## have gg, comps, leftover, base from with
@@ -62,7 +67,7 @@ buildStore <- function(res, ulim=60) with(
   base
 ))
 
-# TODO transform everything at once
+# TODO accomplish via join?
 originalUserIDs <- function(store, idmap) {
   idmap[store$new_user_id, list(user_id, community=store$community)]
 }
