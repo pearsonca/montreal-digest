@@ -44,7 +44,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
 }
 
 clargs <- parse_args(
-  c("input/background-clusters/spin-glass/acc-30-30", "input/background-clusters/spin-glass/agg-30-30", "-v") # uncomment to debug
+#  c("input/background-clusters/spin-glass/acc-30-30", "input/background-clusters/spin-glass/agg-30-30", "-v") # uncomment to debug
 )
 
 readIn <- function(fn) {
