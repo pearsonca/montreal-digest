@@ -35,7 +35,7 @@ resolve <- function(
       originalUserIDs(store, mp),
       resfile
     )
-  }), mc.cores = crs)
+  }), mc.cores = crs, mc.allow.recursive = F)
 }
 
 require(optparse)

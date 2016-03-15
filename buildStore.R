@@ -1,4 +1,6 @@
 
+require(parallel)
+
 relabeller <- function(dt) {
   ret <- if (dim(dt)[1]) {
     remap_ids <- setkey(dt[,list(user_id=unique(c(user.a,user.b)))], user_id)[, new_user_id := .GRP, by=user_id]
@@ -33,7 +35,8 @@ basicGraphPartition <- function(res, ulim=60) {
     commap[completeCommunities] <- 1:length(completeCommunities)
     data.table(
       new_user_id=newuids,
-      community=commap[comps$membership[newuids]]
+      community=commap[comps$membership[newuids]],
+      key="new_user_id"
     ) #  mp[newuids, list(user_id, community=newcoms)]
   } else data.table(new_user_id=integer(0), community=integer(0))
   
@@ -53,7 +56,7 @@ targettedGraphPartition <- function(target, grp, compnts) {
 }
 
 ## have gg, comps, leftover, base from with
-buildStore <- function(res, ulim=60) with(
+buildStore <- function(res, ulim=60, crs=1) setkey(with(
   basicGraphPartition(res, ulim), Reduce(
   function(base, add) rbindlist({
     c(list(base),mapply(
@@ -63,11 +66,12 @@ buildStore <- function(res, ulim=60) with(
       SIMPLIFY = F
     ))
   }),
-  lapply(leftovers, targettedGraphPartition, grp=gg, compnts=comps),
+  mclapply(leftovers, targettedGraphPartition, grp=gg, compnts=comps, mc.cores = crs),
   base
-))
+)), new_user_id)
 
-# TODO accomplish via join?
+# TODO accomplish via join?  assert, key(store) == new_user_id
 originalUserIDs <- function(store, idmap) {
+  ##store[idmap][,sub("new_(user_id)","\\1",names(store)), with=F]
   idmap[store$new_user_id, list(user_id, community=store$community)]
 }

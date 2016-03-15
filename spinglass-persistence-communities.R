@@ -10,8 +10,8 @@ source("../montreal-digest/buildStore.R")
 
 emptygraph <- data.table(user_id=integer(), community=integer())
 
-resolve <- function(base.dt, outputfn, verbose) with(relabeller(base.dt), {
-  store <- if (dim(res)[1] == 0) emptygraph else buildStore(res)
+resolve <- function(base.dt, outputfn, verbose, crs) with(relabeller(base.dt), {
+  store <- if (dim(res)[1] == 0) emptygraph else buildStore(res, crs=crs)
   if (verbose) cat("finishing", outputfn,"\n")
   saveRDS(
     originalUserIDs(store, mp),
@@ -27,6 +27,11 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
       optparse::make_option(
         c("--verbose","-v"),  action="store_true", default = FALSE,
         help="verbose?"
+      ),
+      optparse::make_option(
+        c("--cores","-c"), dest = "crs",
+        default = min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores()-1, na.rm = T),
+        help="number of cores to use in multithreaded calculation."
       )
     )
   )

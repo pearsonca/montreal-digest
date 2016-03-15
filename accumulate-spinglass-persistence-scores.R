@@ -9,7 +9,7 @@ require(igraph)
 require(parallel)
 require(optparse)
 
-filelister <- function(dir) list.files(dir, "^\\d+.rds$", full.names = T)
+filelister <- function(dir) list.files(sub("/$", "", dir), "^\\d+.rds$", full.names = T)
 
 parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   parser <- optparse::OptionParser(
