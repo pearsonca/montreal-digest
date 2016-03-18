@@ -21,13 +21,18 @@ relabeller <- function(dt) {
 ## - separate the components that are *not* already a community (size > ulim), leftovers
 ## - for the k components that are small enough to already be communities,
 ##   label those users as in communities 1:k, according to their components
-basicGraphPartition <- function(res, ulim=60) {
+basicGraphPartition <- function(res, ulim=60, verbose=F) {
   gg <- graph(t(res[,list(user.a, user.b)]), directed=F)
   E(gg)$weight <- res$score
   comps <- components(gg)
   
   leftovers <- which(comps$csize > ulim)
   completeCommunities <- (1:comps$no)[-leftovers] # components to treat as their own communities
+  
+  if (verbose) {
+    cat(sprintf("found %d components of size <= %d\n", length(completeCommunities), ulim))
+    cat(sprintf("found %d components of size > %d\n", length(leftovers), ulim))
+  }
   
   base <- if (length(completeCommunities)) {
     newuids <- which(comps$membership %in% completeCommunities)
@@ -43,9 +48,10 @@ basicGraphPartition <- function(res, ulim=60) {
   list(gg=gg, comps=comps, leftovers=leftovers, base=base)
 }
 
-targettedGraphPartition <- function(target, grp, compnts) {
+targettedGraphPartition <- function(target, grp, compnts, verbose=F) {
   origs <- which(compnts$membership == target) # which vertices are we decomposing into communities?
   ggs <- induced_subgraph(grp, origs) # get subgraph; n.b.: this re-indexes vertices
+  if (verbose) cat(sprintf("%d edges in component %d\n", length(E(ggs)), target))
   cs <- cluster_spinglass(ggs) # find spin-glass communities
   while(redn <- sum(sizes(cs)==1)) {
     # if communities of size 1 are identified, re-spinglass with fewer spins
@@ -56,17 +62,17 @@ targettedGraphPartition <- function(target, grp, compnts) {
 }
 
 ## have gg, comps, leftover, base from with
-buildStore <- function(res, ulim=60, crs=1) setkey(with(
-  basicGraphPartition(res, ulim), Reduce(
-  function(base, add) rbindlist({
+buildStore <- function(res, ulim=60, crs=1, verbose=F) setkey(with(
+  basicGraphPartition(res, ulim, verbose), Reduce(
+  function(base, add) rbindlist(
     c(list(base),mapply(
       data.table,
       new_user_id = add,
       community = 1:length(add)+base[,max(community)],
       SIMPLIFY = F
     ))
-  }),
-  mclapply(leftovers, targettedGraphPartition, grp=gg, compnts=comps, mc.cores = crs),
+  ),
+  mclapply(leftovers, targettedGraphPartition, grp=gg, compnts=comps, verbose=verbose, mc.cores = crs),
   base
 )), new_user_id)
 

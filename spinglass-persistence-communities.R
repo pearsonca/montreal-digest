@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 ## read in raw input
-
+# setwd(sprintf("%s/muri-overall", Sys.getenv("GITPROJHOME")))
 rm(list=ls())
 
 require(data.table)
@@ -11,7 +11,7 @@ source("../montreal-digest/buildStore.R")
 emptygraph <- data.table(user_id=integer(), community=integer())
 
 resolve <- function(base.dt, outputfn, verbose, crs) with(relabeller(base.dt), {
-  store <- if (dim(res)[1] == 0) emptygraph else buildStore(res, crs=crs)
+  store <- if (dim(res)[1] == 0) emptygraph else buildStore(res, crs=crs, verbose=verbose)
   if (verbose) cat("finishing", outputfn,"\n")
   saveRDS(
     originalUserIDs(store, mp),
@@ -21,7 +21,7 @@ resolve <- function(base.dt, outputfn, verbose, crs) with(relabeller(base.dt), {
 
 parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   parser <- optparse::OptionParser(
-    usage = "usage: %prog path/to/acc-interval-userab-scores.rds path/to/interval-user-community.rds",
+    usage = "usage: %prog path/to/agg-interval-userab-scores.rds path/to/interval-user-community.rds",
     description = "convert (user.a, user.b, score) accumulated to interval k into (user, persistence community) at interval k.",
     option_list = list(
       optparse::make_option(
@@ -43,4 +43,6 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   result
 }
 
-do.call(resolve, parse_args())
+do.call(resolve, parse_args(
+  c("input/background-clusters/spin-glass/agg-15-15/063.rds", "input/background-clusters/spin-glass/pc-15-15/063.rds", "-v")
+))
