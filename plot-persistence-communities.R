@@ -3,7 +3,7 @@
 rm(list=ls())
 
 require(data.table)
-require(igraph)
+require(ggplot2)
 require(reshape2)
 
 filelister <- function(dir) list.files(dir, "^\\d+.rds$", full.names = T)
@@ -31,7 +31,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
 digest <- function(inputdirs, outputbase, verbose) {
   #browser()
   tmp <- rbindlist(lapply(inputdirs, function(dir) {
-      stride <- as.numeric(sub(".+pc-(\\d+)-\\d+$","\\1",dir)); win <- as.numeric(sub(".+pc-\\d+-(\\d+)$","\\1",dir));
+      stride <- as.numeric(sub(".+-(\\d+)-\\d+$","\\1",dir)); win <- as.numeric(sub(".+-\\d+-(\\d+)$","\\1",dir));
       rbindlist(lapply(filelister(dir), function(fn) {
       hld <- readRDS(fn)
       interval <- as.integer(sub(".+/(\\d+)\\.rds","\\1", fn))
@@ -67,12 +67,16 @@ digest <- function(inputdirs, outputbase, verbose) {
   ) +
     geom_rect() +
     facet_grid(stride ~ window) + labs(x="interval", y="community size") #+
-    #geom_point(aes(y=mx)) + geom_point(aes(y=mn)) 
+    #geom_point(aes(y=mx)) + geom_point(aes(y=mn))
   #browser()
   ggsave(sprintf('%s_%s.png', outputbase, 'distro'), psizedistro)
   ggsave(sprintf('%s_%s.png', outputbase, 'count'), pcount)
 }
 
 do.call(digest, parse_args(
-  c("input/background-clusters/spin-glass/pc-*", "pc_cluster_trends")
+  c("input/background-clusters/spin-glass/pc-*", "output/background-clusters/spin-glass/pc_cluster_trends")
+))
+
+do.call(digest, parse_args(
+  c("input/background-clusters/spin-glass/base-*", "output/background-clusters/spin-glass/base_cluster_trends")
 ))
