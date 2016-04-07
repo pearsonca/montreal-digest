@@ -3,14 +3,21 @@ require(parallel)
 
 relabeller <- function(dt) {
   ret <- if (dim(dt)[1]) {
-    remap_ids <- setkey(dt[,list(user_id=unique(c(user.a,user.b)))], user_id)[, new_user_id := .GRP, by=user_id]
+    remap_ids <- dt[,list(user_id=unique(c(user.a,user.b)))]
+    # might have negative ids - want these to go at the end
+    if (length(remap_ids[user_id < 0, user_id])) {
+      maxuid <- remap_ids[,max(user_id)]
+      remap_ids[user_id < 0, user_id := maxuid - user_id]
+    }
+    setkey(remap_ids, user_id)[, new_user_id := .GRP, by=user_id]
     relabelled <- data.table(
-      user.a=remap_ids[dt[,list(user_id=user.a)]]$new_user_id,
-      user.b=remap_ids[dt[,list(user_id=user.b)]]$new_user_id
+      user.a=remap_ids[dt[,list(user_id=ifelse(user.a>0,user.a,maxuid-user.a))]]$new_user_id,
+      user.b=remap_ids[dt[,list(user_id=ifelse(user.b>0,user.b,maxuid-user.b))]]$new_user_id
     )
     for (nm in grep("user", names(dt), invert = T, value = T)) {
       relabelled[[nm]] <- dt[[nm]]
     }
+    remap_ids[user_id > maxuid, user_id := maxuid - user_id]
     list(res=relabelled, mp=remap_ids)
   } else list(res=dt, mp=data.table(user_id=integer(0), new_user_id=integer(0)))
   ret
