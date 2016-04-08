@@ -68,6 +68,15 @@ targettedGraphPartition <- function(target, grp, compnts, verbose=F) {
   lapply(communities(cs), function(comm) origs[comm]) # so convert them back to original indices
 }
 
+targettedGraphPartitionOne <- function(vx, grp, compnts, verbose=F) {
+  target <- compnts$membership[vx]
+  origs <- which(compnts$membership == target) # which vertices are we decomposing into communities?
+  ggs <- induced_subgraph(grp, origs) # get subgraph; n.b.: this re-indexes vertices
+  if (verbose) cat(sprintf("%d edges in component %d\n", length(E(ggs)), target))
+  cs <- cluster_spinglass(ggs, vertex = which(origs == vx)) # find spin-glass community
+  origs[cs$community]
+}
+
 ## have gg, comps, leftover, base from with
 buildStore <- function(res, ulim=60, crs=1, verbose=F) setkey(with(
   basicGraphPartition(res, ulim, verbose), Reduce(
