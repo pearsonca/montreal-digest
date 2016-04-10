@@ -58,6 +58,7 @@ readIn <- function(fn) {
 
 with(clargs,{
   censor_score <- discount^censor
+  # trim input files to the first file not yet processed
   Reduce(
     function(prev, currentfn) {
       newres <- rbind(readIn(currentfn), prev[, score := score*discount ])

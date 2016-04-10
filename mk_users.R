@@ -45,7 +45,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
 }
 
 with(parse_args(
-  c("matched", "mid", "lo", "late", "10", "001", "-v")
+#  c("matched", "mid", "lo", "late", "10", "001", "-v")
 ), {
   template_user_ids <- readRDS("input/user.RData")[(lifetime_main == lft_cat & pwr_main == pwr_cat & peak_main == tm_cat), user_id]
   if (verbose) print(template_user_ids)
