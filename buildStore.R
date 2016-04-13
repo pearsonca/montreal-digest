@@ -14,8 +14,8 @@ relabeller <- function(dt) {
     }
     setkey(remap_ids, user_id)[, new_user_id := .GRP, by=user_id]
     relabelled <- data.table(
-      user.a=remap_ids[dt[,list(user_id=ifelse(user.a>0,user.a,maxuid-user.a))]]$new_user_id,
-      user.b=remap_ids[dt[,list(user_id=ifelse(user.b>0,user.b,maxuid-user.b))]]$new_user_id
+      user.a=remap_ids[dt[,list(user_id=ifelse(user.a>=0,user.a,maxuid-user.a))]]$new_user_id,
+      user.b=remap_ids[dt[,list(user_id=ifelse(user.b>=0,user.b,maxuid-user.b))]]$new_user_id
     )
     
     for (nm in grep("user", names(dt), invert = T, value = T)) {
