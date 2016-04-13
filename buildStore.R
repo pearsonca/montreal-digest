@@ -8,12 +8,15 @@ relabeller <- function(dt) {
     if (length(remap_ids[user_id < 0, user_id])) {
       maxuid <- remap_ids[,max(user_id)]
       remap_ids[user_id < 0, user_id := maxuid - user_id]
+    } else {
+      maxuid <- NA
     }
     setkey(remap_ids, user_id)[, new_user_id := .GRP, by=user_id]
     relabelled <- data.table(
       user.a=remap_ids[dt[,list(user_id=ifelse(user.a>0,user.a,maxuid-user.a))]]$new_user_id,
       user.b=remap_ids[dt[,list(user_id=ifelse(user.b>0,user.b,maxuid-user.b))]]$new_user_id
     )
+    
     for (nm in grep("user", names(dt), invert = T, value = T)) {
       relabelled[[nm]] <- dt[[nm]]
     }

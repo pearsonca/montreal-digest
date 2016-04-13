@@ -43,28 +43,33 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   result
 }
 
-clargs <- parse_args(
-#  c("input/background-clusters/spin-glass/acc-30-30", "input/background-clusters/spin-glass/agg-30-30", "-v") # uncomment to debug
-)
-
 readIn <- function(fn) {
   res <- readRDS(fn)[,score,by=list(user.a, user.b)]
   res[
     user.b < user.a,
     `:=`(user.b = user.a, user.a = user.b)
-  ]
+    ]
   res
 }
 
+clargs <- parse_args(
+#  c("input/background-clusters/spin-glass/acc-15-30", "input/background-clusters/spin-glass/agg-15-30", "-v") # uncomment to debug
+)
+
 with(clargs,{
+#  browser()
   censor_score <- discount^censor
+  doneFiles <- list.files(outputdir, full.names = T)
+  trim <- length(doneFiles)-1 # assume: files produced sequentially + last file has write error of some kind
+  reduceInputFiles <- if (trim) inputfiles[-(1:trim)] else inputfiles[-1]
+  init.dt <- if (trim) readRDS(doneFiles[trim]) else storeres(readIn(inputfiles[1]), inputfiles[1])
   # trim input files to the first file not yet processed
   Reduce(
     function(prev, currentfn) {
       newres <- rbind(readIn(currentfn), prev[, score := score*discount ])
       storeres(newres[,list(score = sum(score)), keyby=list(user.a, user.b)][score > censor_score], currentfn)
     },
-    inputfiles[-1],
-    storeres(readIn(inputfiles[1]), inputfiles[1])
+    reduceInputFiles,
+    init.dt
   )
 })
