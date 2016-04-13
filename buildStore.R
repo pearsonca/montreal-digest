@@ -1,5 +1,6 @@
 
 require(parallel)
+require(igraph)
 
 relabeller <- function(dt) {
   ret <- if (dim(dt)[1]) {
