@@ -53,13 +53,13 @@ readIn <- function(fn) {
 }
 
 clargs <- parse_args(
-#  c("input/background-clusters/spin-glass/acc-15-30", "input/background-clusters/spin-glass/agg-15-30", "-v") # uncomment to debug
+#  c("input/background-clusters/spin-glass/acc-15-30/", "input/background-clusters/spin-glass/agg-15-30/") # uncomment to debug
 )
 
 with(clargs,{
-#  browser()
   censor_score <- discount^censor
-  doneFiles <- list.files(outputdir, full.names = T)
+  doneFiles <- list.files(sub("/$","", outputdir), full.names = T)
+#  browser()
   trim <- length(doneFiles)-1 # assume: files produced sequentially + last file has write error of some kind
   reduceInputFiles <- if (trim) inputfiles[-(1:trim)] else inputfiles[-1]
   init.dt <- if (trim) readRDS(doneFiles[trim]) else storeres(readIn(inputfiles[1]), inputfiles[1])
