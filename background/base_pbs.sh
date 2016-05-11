@@ -13,5 +13,6 @@ cat <<EOF
 
 module load gcc/5.2.0 R/3.2.2
 cd /scratch/lfs/cap10/montreal-digest
-make input/digest/background/$2/base/\$PBS_ARRAYID.rds
+tar=\$(printf 'input/digest/background/$2/base/%03d.rds' \$PBS_ARRAYID)
+make \$tar
 EOF

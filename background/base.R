@@ -34,17 +34,8 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
     description = "convert (user.a, user.b, start, end) into (user, community, interval).",
     option_list = list(
       optparse::make_option(
-        c("--max","-m"), type = "integer", dest="mxint",
-        help="the maximum number of intervals to consider"
-      ),
-      optparse::make_option(
         c("--verbose","-v"),  action="store_true", default = FALSE,
         help="verbose?"
-      ),
-      optparse::make_option(
-        c("--cores","-c"), dest = "crs",
-        default = min(as.integer(Sys.getenv("PBS_NUM_PPN")), detectCores()-1, na.rm = T),
-        help="number of cores to use in multithreaded calculation."
       )
     )
   )
@@ -60,7 +51,7 @@ clargs <- parse_args(
 #  c("input/raw/pairs.rds", "30", "30", "001", "-v","-m","5") # uncomment for debugging
 )
 
-resolve <- function(base.dt, intDays, winDays, inc) {
+resolve <- function(base.dt, intDays, winDays, inc, verbose=F) {
   st = base.dt[1, floor(start/60/60/24)]
   with(slice(base.dt, st + inc*intDays-winDays, st + inc*intDays), {
     store <- if (dim(res)[1] == 0) emptygraph else buildStore(res)
