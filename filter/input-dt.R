@@ -5,13 +5,11 @@ rm(list=ls())
 
 args <- commandArgs(trailingOnly = T)
 # inpath, assumpath, outpath
-if (length(args)<3) stop("too few arguments to filtered-input-dt.R: ", args)
 
 require(data.table)
-require(jsonlite)
 
 raw <- readRDS(args[1])
-assumptions <- fromJSON(args[2])
+assumptions <- jsonlite::fromJSON(args[2])
 
 res <- with(assumptions,{
   filtered <- raw[(logout != login) & ((logout - login) <= max_hours*60*60)]
@@ -37,4 +35,4 @@ res <- with(assumptions,{
   filtered
 })
 
-saveRDS(res, args[3])
+saveRDS(res, pipe("cat", "wb"))

@@ -2,6 +2,12 @@
 rm(list=ls())
 ## invoke from command line, w/ rscripts as wd
 
+# input/user.RData
+# input/censor.RData
+# input/locClusters.RData
+# input/userPrefs.RData
+# input/loc_probs.csv
+
 suppressPackageStartupMessages({
   require(data.table)
   require(stats4)

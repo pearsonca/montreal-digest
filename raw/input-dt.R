@@ -3,15 +3,13 @@
 
 rm(list=ls())
 
-args <- commandArgs(trailingOnly = T)
-# inpath, outpath
-if (length(args)<2) stop("too few arguments to raw-input-dt.R: ", args)
+original_data <- commandArgs(trailingOnly = T)[1]
 
 require(data.table)
 
 saveRDS(setkey(fread(
-    args[1], header = F, sep=" ",
+    original_data, header = F, sep=" ",
     colClasses = list(integer=1.4),
     col.names  = c("user_id", "location_id", "login", "logout")
   ), login, logout, user_id, location_id
-), args[2])
+), pipe("cat", "wb"))
