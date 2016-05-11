@@ -63,13 +63,13 @@ $(INBASE)/background/$(1): | $(INBASE)/background
 	mkdir $$@
 endef
 
+$(foreach inter,$(INTERVALS),$(eval $(call factorial1dir,$(inter))))
+
 # assumes argument is of flavor a/b/c/etc, where last item is a directory to be constructed
 define factorial2dir
 $(INBASE)/background/$(1): | $(INBASE)/background/$(dir $(1))
 	mkdir $$@
 endef
-
-$(foreach inter,$(INTERVALS),$(eval $(call factorial1dir,$(inter))))
 
 BG-BASE-FACTORIAL :=
 
@@ -80,7 +80,34 @@ $(foreach inter,$(INTERVALS),\
 
 BG-BASE-FACTORIAL := $(filter-out $(FORBID),$(BG-BASE-FACTORIAL))
 
-$(foreach b,$(BG-BASE-FACTORIAL),$(eval $(call factorial2dir,$(b))))
+define basebgrule
+$(call factorial2dir,$(1))
+
+$(INBASE)/background/$(1)/ints $(INBASE)/background/$(1)/base: | $(INBASE)/background/$(1)
+	mkdir $$@
+
+$(INBASE)/background/$(1)/ints/%.rds: background/intervals.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/ints
+	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
+
+$(subst /,-,$(1))-ALLINTERVALS := $(addprefix $(INBASE)/background/$(1)/ints/,$(shell $(R) background/mkints.R $(INBASE)/raw/pairs.rds $(firstword $(subst /,$(SPACE),$(1)))))
+
+all-$(subst /,-,$(1))-intervals: $$($(subst /,-,$(1))-ALLINTERVALS)
+
+.PRECIOUS: $(INBASE)/background/$(1)/ints/%.rds
+
+background/background-$(subst /,-,$(1))-base.pbs: all-$(subst /,-,$(1))-intervals | background/base_pbs.sh
+	$$| $$(notdir $$(basename $$@)) $(1) $$(words $$($(subst /,-,$(1))-ALLINTERVALS)) > $$@
+
+all-base-pbs: background/background-$(subst /,-,$(1))-base.pbs
+
+$(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/background/$(1)/ints/%.rds | $(INBASE)/background/$(1)/base
+	$(R) $$^ > $$@
+
+.PRECIOUS: $(INBASE)/background/$(1)/base/*.rds
+
+endef
+
+$(foreach b,$(BG-BASE-FACTORIAL),$(eval $(call basebgrule,$(b))))
 
 BG-FACTORIAL :=
 
@@ -91,26 +118,10 @@ $(foreach base,$(BG-BASE-FACTORIAL),\
 
 $(foreach b,$(BG-FACTORIAL),$(eval $(call factorial2dir,$(b))))
 
-define basebgrule
-$(INBASE)/background/$(1)/base: | $(INBASE)/background/$(1)
-	mkdir $$@
-
-background/background-$(subst /,-,$(1))-base.pbs: background/mkints.R $(INBASE)/raw/pairs.rds | background/base_pbs.sh
-	$$| $$(notdir $$(basename $$@)) $(1) $$(shell $(R) $$^ $(firstword $(subst /,$(SPACE),$(1)))) > $$@
-
-all-base-pbs: background/background-$(subst /,-,$(1))-base.pbs
-
-$(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/base
-	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
-
-endef
-
-$(foreach b,$(BG-BASE-FACTORIAL),$(eval $(call basebgrule,$(b))))
-
 define bgrule
 
-$(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(INBASE)/background/$(dir $(1))/base/%.rds | $(INBASE)/background/$(1)/acc
-	$(R) $$^ $$* > $$@
+$(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(INBASE)/background/$(dir $(1))base/%.rds | $(INBASE)/background/$(1)/acc
+	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
 
 $(INBASE)/background/$(1)/agg/%.rds: background/aggregate.R $(INBASE)/background/$(1)/acc/%.rds | $(INBASE)/background/$(1)/agg
 	$(R) $$^ $$* > $$@
@@ -121,6 +132,6 @@ $(INBASE)/background/$(1)/pc/%.rds: background/pc.R $(INBASE)/background/$(1)/ag
 endef
 
 # foreach item in bg factorial, generate make rules for all the backgrounds
-# $(foreach comb,$(BG-FACTORIAL),\
-# $(eval $(call bgrule,$(comb)))
-# )
+$(foreach comb,$(BG-FACTORIAL),\
+$(eval $(call bgrule,$(comb)))\
+)
