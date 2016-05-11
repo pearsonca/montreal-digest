@@ -48,7 +48,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
       )
     )
   )
-  req_pos <- list(base.dt=rawReader, intDays=as.integer, winDays=as.integer, outputinterval=identity)
+  req_pos <- list(base.dt=rawReader, intDays=as.integer, winDays=as.integer, inc=as.integer)
   parsed <- optparse::parse_args(parser, argv, positional_arguments = length(req_pos))
   parsed$options$help <- NULL
   result <- c(mapply(function(f,c) f(c), req_pos, parsed$args, SIMPLIFY = F), parsed$options)
@@ -57,7 +57,7 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
 }
 
 clargs <- parse_args(
-#  c("input/raw-pairs.rds", "30", "30", "input/background-clusters/spin-glass/30-30", "-v","-m","5") # uncomment for debugging
+#  c("input/raw/pairs.rds", "30", "30", "001", "-v","-m","5") # uncomment for debugging
 )
 
 resolve <- function(base.dt, intDays, winDays, inc) {
