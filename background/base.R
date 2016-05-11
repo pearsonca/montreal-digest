@@ -7,7 +7,7 @@ require(data.table)
 require(igraph)
 require(parallel)
 
-source("../buildStore.R")
+source("buildStore.R")
 
 slice <- function(dt, low, high) relabeller(
   dt[start < high*24*3600 & low*24*3600 < end,
