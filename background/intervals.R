@@ -3,9 +3,7 @@
 
 rm(list=ls())
 
-suppressPackageStartupMessages(
-  require(data.table)
-)
+suppressPackageStartupMessages(require(data.table))
 
 source("buildStore.R")
 

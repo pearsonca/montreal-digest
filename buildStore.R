@@ -1,6 +1,5 @@
-
-require(parallel)
-require(igraph)
+suppressPackageStartupMessages(require(parallel))
+suppressPackageStartupMessages(require(igraph))
 
 relabeller <- function(dt) {
   ret <- if (dim(dt)[1]) {

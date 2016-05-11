@@ -3,13 +3,11 @@
 
 rm(list=ls())
 
-require(data.table)
+suppressPackageStartupMessages(require(data.table))
 
 source("buildStore.R")
 
 emptygraph <- data.table(user_id=integer(), community=integer())
-
-require(optparse)
 
 rawReader <- function(pth) {
   raw.dt <- readRDS(pth)
