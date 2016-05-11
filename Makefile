@@ -98,6 +98,8 @@ $(INBASE)/background/$(1)/base: | $(INBASE)/background/$(1)
 background/background-$(subst /,-,$(1))-base.pbs: background/mkints.R $(INBASE)/raw/pairs.rds | background/base_pbs.sh
 	$$| $$(notdir $$(basename $$@)) $(1) $$(shell $(R) $$^ $(firstword $(subst /,$(SPACE),$(1)))) > $$@
 
+all-base-pbs: background/background-$(subst /,-,$(1))-base.pbs
+
 $(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/base
 	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
 
