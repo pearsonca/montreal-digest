@@ -95,6 +95,9 @@ define basebgrule
 $(INBASE)/background/$(1)/base: | $(INBASE)/background/$(1)
 	mkdir $$@
 
+background/background-$(subst /,-,$(1))-base.pbs: background/mkints.R $(INBASE)/raw/pairs.rds | background/base_pbs.sh
+	$$| $$(notdir $$(basename $$@)) $(1) $$(shell $(R) $$^ $(firstword $(subst /,$(SPACE),$(1)))) > $$@
+
 $(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/base
 	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
 
