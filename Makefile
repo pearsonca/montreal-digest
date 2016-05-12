@@ -2,6 +2,9 @@
 include references.mk
 include $(REFDIR)/references.mk
 
+# usage: $(call first,middles...,last)
+wrap = $(addsuffix $(3),$(addprefix $(1),$(2)))
+
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
 
@@ -120,8 +123,8 @@ $(foreach b,$(BG-FACTORIAL),$(eval $(call factorial2dir,$(b))))
 
 define bgrule
 
-$(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(INBASE)/background/$(dir $(1))base/%.rds | $(INBASE)/background/$(1)/acc
-	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
+$(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(call wrap,$(INBASE)/background/$(dir $(1)),base ints,/%.rds) | $(INBASE)/background/$(1)/acc
+	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
 $(INBASE)/background/$(1)/agg/%.rds: background/aggregate.R $(INBASE)/background/$(1)/acc/%.rds | $(INBASE)/background/$(1)/agg
 	$(R) $$^ $$* > $$@
