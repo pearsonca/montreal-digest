@@ -126,6 +126,12 @@ define bgrule
 $(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(call wrap,$(INBASE)/background/$(dir $(1)),base ints,/%.rds) | $(INBASE)/background/$(1)/acc
 	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
+background/background-$(subst /,-,$(1))-acc.pbs: | background/base_pbs.sh
+	$$| $$(notdir $$(basename $$@)) $(1) $$(words $$($(subst /,-,$(dir $(1)))ALLINTERVALS)) > $$@
+
+all-acc-pbs: background/background-$(subst /,-,$(1))-acc.pbs
+
+
 $(INBASE)/background/$(1)/agg/%.rds: background/aggregate.R $(INBASE)/background/$(1)/acc/%.rds | $(INBASE)/background/$(1)/agg
 	$(R) $$^ $$* > $$@
 
@@ -136,5 +142,5 @@ endef
 
 # foreach item in bg factorial, generate make rules for all the backgrounds
 $(foreach comb,$(BG-FACTORIAL),\
-$(eval $(call bgrule,$(comb)))\
+$(info $(call bgrule,$(comb)))\
 )
