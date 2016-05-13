@@ -123,6 +123,9 @@ $(foreach b,$(BG-FACTORIAL),$(eval $(call factorial2dir,$(b))))
 
 define bgrule
 
+$(INBASE)/background/$(1)/acc: | $(INBASE)/background/$(1)
+	mkdir $$@
+
 $(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(call wrap,$(INBASE)/background/$(dir $(1)),base ints,/%.rds) | $(INBASE)/background/$(1)/acc
 	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
