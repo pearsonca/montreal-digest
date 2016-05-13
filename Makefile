@@ -92,7 +92,7 @@ $(INBASE)/background/$(1)/ints $(INBASE)/background/$(1)/base: | $(INBASE)/backg
 $(INBASE)/background/$(1)/ints/%.rds: background/intervals.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/ints
 	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
 
-$(subst /,-,$(1))-ALLINTERVALS := $(addprefix $(INBASE)/background/$(1)/ints/,$(shell $(R) background/mkints.R $(INBASE)/raw/pairs.rds $(firstword $(subst /,$(SPACE),$(1)))))
+$(subst /,-,$(1))-ALLINTERVALS = $$(addprefix $(INBASE)/background/$(1)/ints/,$$(shell $(R) background/mkints.R $(INBASE)/raw/pairs.rds $(firstword $(subst /,$(SPACE),$(1)))))
 
 all-$(subst /,-,$(1))-intervals: $$($(subst /,-,$(1))-ALLINTERVALS)
 

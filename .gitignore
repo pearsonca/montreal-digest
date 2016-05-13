@@ -3,3 +3,5 @@ input/*
 input
 .Rproj.user
 .Rhistory
+*.err-*
+*.o-*
