@@ -126,7 +126,7 @@ define bgrule
 $(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(call wrap,$(INBASE)/background/$(dir $(1)),base ints,/%.rds) | $(INBASE)/background/$(1)/acc
 	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
-background/background-$(subst /,-,$(1))-acc.pbs: | background/base_pbs.sh
+background/background-$(subst /,-,$(1))-acc.pbs: | background/acc_pbs.sh
 	$$| $$(notdir $$(basename $$@)) $(1) $$(words $$($(subst /,-,$(dir $(1)))ALLINTERVALS)) > $$@
 
 all-acc-pbs: background/background-$(subst /,-,$(1))-acc.pbs
