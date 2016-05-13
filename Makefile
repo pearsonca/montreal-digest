@@ -142,5 +142,5 @@ endef
 
 # foreach item in bg factorial, generate make rules for all the backgrounds
 $(foreach comb,$(BG-FACTORIAL),\
-$(info $(call bgrule,$(comb)))\
+$(eval $(call bgrule,$(comb)))\
 )
