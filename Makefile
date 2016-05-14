@@ -152,6 +152,11 @@ all-acc-pbs: background/background-$(subst /,-,$(1))-acc.pbs
 $(INBASE)/background/$(1)/pc/%.rds: background/persistence.R $(INBASE)/background/$(1)/agg/%.rds | $(INBASE)/background/$(1)/pc
 	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
+background/background-$(subst /,-,$(1))-pc.pbs: | background/pc_pbs.sh
+	$$| $$(notdir $$(basename $$@)) $(1) $(call getlim,$(1)) > $$@
+
+all-pc-pbs: background/background-$(subst /,-,$(1))-pc.pbs
+
 endef
 
 # foreach item in bg factorial, generate make rules for all the backgrounds
