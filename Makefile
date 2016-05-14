@@ -149,8 +149,8 @@ background/background-$(subst /,-,$(1))-acc.pbs: | background/acc_pbs.sh
 
 all-acc-pbs: background/background-$(subst /,-,$(1))-acc.pbs
 
-$(INBASE)/background/$(1)/pc/%.rds: background/pc.R $(INBASE)/background/$(1)/agg/%.rds | $(INBASE)/background/$(1)/pc
-	$(R) $$^ $$(subst /,$(SPACE),$$*) > $$@
+$(INBASE)/background/$(1)/pc/%.rds: background/persistence.R $(INBASE)/background/$(1)/agg/%.rds | $(INBASE)/background/$(1)/pc
+	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
 endef
 
