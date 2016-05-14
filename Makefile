@@ -83,6 +83,21 @@ $(foreach inter,$(INTERVALS),\
 
 BG-BASE-FACTORIAL := $(filter-out $(FORBID),$(BG-BASE-FACTORIAL))
 
+nfmt = $(shell printf '%03d' $(1))
+
+$(foreach inter,$(INTERVALS),\
+ $(eval $(inter)-LIMIT := $(shell $(R) background/maxinterval.R $(INBASE)/raw/pairs.rds $(inter)))\
+)
+
+seq2 = $(strip $(shell for i in $$(seq $(1) $(2)); do printf '%03d ' $$i; done))
+seq = $(call seq2,1,$(1))
+
+#$(info limit $(30-LIMIT))
+#$(info $(call seq,$(30-LIMIT)))
+#$(info limit $($(firstword $(subst /,$(SPACE),30/15))-LIMIT))
+
+getlim = $($(firstword $(subst /,$(SPACE),$(1)))-LIMIT)
+
 define basebgrule
 $(call factorial2dir,$(1))
 
@@ -92,14 +107,14 @@ $(INBASE)/background/$(1)/ints $(INBASE)/background/$(1)/base: | $(INBASE)/backg
 $(INBASE)/background/$(1)/ints/%.rds: background/intervals.R $(INBASE)/raw/pairs.rds | $(INBASE)/background/$(1)/ints
 	$(R) $$^ $(subst /,$(SPACE),$(1)) $$* > $$@
 
-$(subst /,-,$(1))-ALLINTERVALS = $$(addprefix $(INBASE)/background/$(1)/ints/,$$(shell $(R) background/mkints.R $(INBASE)/raw/pairs.rds $(firstword $(subst /,$(SPACE),$(1)))))
+$(subst /,-,$(1))-ALLINTERVALS := $(call wrap,$(INBASE)/background/$(1)/ints/,$(call seq,$($(firstword $(subst /,$(SPACE),$(1)))-LIMIT)),.rds)
 
 all-$(subst /,-,$(1))-intervals: $$($(subst /,-,$(1))-ALLINTERVALS)
 
 .PRECIOUS: $(INBASE)/background/$(1)/ints/%.rds
 
 background/background-$(subst /,-,$(1))-base.pbs: all-$(subst /,-,$(1))-intervals | background/base_pbs.sh
-	$$| $$(notdir $$(basename $$@)) $(1) $$(words $$($(subst /,-,$(1))-ALLINTERVALS)) > $$@
+	$$| $$(notdir $$(basename $$@)) $(1) $(call getlim,$(1)) > $$@
 
 all-base-pbs: background/background-$(subst /,-,$(1))-base.pbs
 
@@ -123,20 +138,16 @@ $(foreach b,$(BG-FACTORIAL),$(eval $(call factorial2dir,$(b))))
 
 define bgrule
 
-$(INBASE)/background/$(1)/acc: | $(INBASE)/background/$(1)
+$(addprefix $(INBASE)/background/$(1)/,acc agg pc): | $(INBASE)/background/$(1)
 	mkdir $$@
 
 $(INBASE)/background/$(1)/acc/%.rds: background/accumulate.R $(call wrap,$(INBASE)/background/$(dir $(1)),base ints,/%.rds) | $(INBASE)/background/$(1)/acc
 	$(R) $$^ $(lastword $(subst /,$(SPACE),$(1))) > $$@
 
 background/background-$(subst /,-,$(1))-acc.pbs: | background/acc_pbs.sh
-	$$| $$(notdir $$(basename $$@)) $(1) $$(words $$($(subst /,-,$(dir $(1)))ALLINTERVALS)) > $$@
+	$$| $$(notdir $$(basename $$@)) $(1) $(call getlim,$(1)) > $$@
 
 all-acc-pbs: background/background-$(subst /,-,$(1))-acc.pbs
-
-
-$(INBASE)/background/$(1)/agg/%.rds: background/aggregate.R $(INBASE)/background/$(1)/acc/%.rds | $(INBASE)/background/$(1)/agg
-	$(R) $$^ $$* > $$@
 
 $(INBASE)/background/$(1)/pc/%.rds: background/pc.R $(INBASE)/background/$(1)/agg/%.rds | $(INBASE)/background/$(1)/pc
 	$(R) $$^ $$(subst /,$(SPACE),$$*) > $$@
@@ -146,4 +157,32 @@ endef
 # foreach item in bg factorial, generate make rules for all the backgrounds
 $(foreach comb,$(BG-FACTORIAL),\
 $(eval $(call bgrule,$(comb)))\
+)
+
+dec = $(shell echo $(1)-1|bc|xargs printf '%03d')
+
+define aggtar
+$(INBASE)/background/$(1)/agg/$(2).rds: background/aggregate.R $(INBASE)/background/$(1)/acc/$(2).rds $(INBASE)/background/$(1)/agg/$(call dec,$(2)).rds | $(INBASE)/background/$(1)/agg
+	$(R) $$^ > $$@
+endef
+
+define aggrule
+$(INBASE)/background/$(1)/agg/001.rds: background/aggregate.R $(INBASE)/background/$(1)/acc/001.rds | $(INBASE)/background/$(1)/agg
+	$(R) $$^ > $$@
+
+$(foreach i,$(call seq2,2,$(call getlim,$(1))),\
+$(call aggtar,$(1),$(i))
+)
+
+background/background-$(subst /,-,$(1))-agg.pbs: | background/agg_pbs.sh
+	$$| $$(notdir $$(basename $$@)) $(1) $(call getlim,$(1)) > $$@
+
+all-agg-pbs: background/background-$(subst /,-,$(1))-agg.pbs
+
+endef
+
+.SECONDEXPANSION:
+
+$(foreach comb,$(BG-FACTORIAL),\
+$(eval $(call aggrule,$(comb)))\
 )
