@@ -34,7 +34,7 @@ parser <- optparse::OptionParser(
   )
 )
 
-req_pos <- list(base.dt=readRDS, mode="identity")
+req_pos <- list(base.dt=readRDS, mode=identity)
 
 parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   parsed <- optparse::parse_args(parser, argv, positional_arguments = length(req_pos))
