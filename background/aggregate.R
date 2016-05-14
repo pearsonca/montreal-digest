@@ -5,11 +5,15 @@
 rm(list=ls())
 
 require(data.table)
-require(igraph)
-require(parallel)
-require(optparse)
 
-filelister <- function(dir) list.files(sub("/$", "", dir), "^\\d+.rds$", full.names = T)
+readIn <- function(fn) {
+  res <- readRDS(fn)[,score,by=list(user.a, user.b)]
+  res[
+    user.b < user.a,
+    `:=`(user.b = user.a, user.a = user.b)
+    ]
+  res
+}
 
 parse_args <- function(argv = commandArgs(trailingOnly = T)) {
   parser <- optparse::OptionParser(
@@ -30,46 +34,27 @@ parse_args <- function(argv = commandArgs(trailingOnly = T)) {
       )
     )
   )
-  req_pos <- list(inputfiles=filelister, outputdir=identity)
-  parsed <- optparse::parse_args(parser, argv, positional_arguments = length(req_pos))
+  req_pos <- list(score.dt=readIn)
+  minargs <- length(req_pos)
+  parsed <- optparse::parse_args(parser, argv, positional_arguments = c(0,1)+minargs)
   parsed$options$help <- NULL
   result <- c(mapply(function(f,c) f(c), req_pos, parsed$args, SIMPLIFY = F), parsed$options)
-  result$storeres <- function(dt, was) {
-    saveRDS(dt, sub(parsed$args[1], parsed$args[2], was))
-    dt
-  }
-  
+  result$prev.dt <- if (length(parsed$args)==2) readIn(parsed$args[2]) else data.table(user.a=integer(), user.b=integer(), score=numeric())
   if(result$verbose) print(result)
   result
 }
 
-readIn <- function(fn) {
-  res <- readRDS(fn)[,score,by=list(user.a, user.b)]
-  res[
-    user.b < user.a,
-    `:=`(user.b = user.a, user.a = user.b)
-    ]
-  res
-}
-
 clargs <- parse_args(
-#  c("input/background-clusters/spin-glass/acc-15-30/", "input/background-clusters/spin-glass/agg-15-30/") # uncomment to debug
+#  c("input/digest/background/30/30/bonus/acc/002.rds", "input/digest/background/30/30/bonus/agg/001.rds") # uncomment to debug
 )
 
 with(clargs,{
-  censor_score <- discount^censor
-  doneFiles <- list.files(sub("/$","", outputdir), full.names = T)
-#  browser()
-  trim <- length(doneFiles)-1 # assume: files produced sequentially + last file has write error of some kind
-  reduceInputFiles <- if (trim) inputfiles[-(1:trim)] else inputfiles[-1]
-  init.dt <- if (trim) readRDS(doneFiles[trim]) else storeres(readIn(inputfiles[1]), inputfiles[1])
-  # trim input files to the first file not yet processed
-  Reduce(
-    function(prev, currentfn) {
-      newres <- rbind(readIn(currentfn), prev[, score := score*discount ])
-      storeres(newres[,list(score = sum(score)), keyby=list(user.a, user.b)][score > censor_score], currentfn)
-    },
-    reduceInputFiles,
-    init.dt
+  saveRDS(
+    rbind(score.dt, prev.dt[, score := score*discount ])[,
+      list(score = sum(score)), keyby=list(user.a, user.b)
+    ][
+      score > discount^censor
+    ],
+    pipe("cat", "wb")
   )
 })
