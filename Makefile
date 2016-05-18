@@ -43,6 +43,8 @@ $(INBASE)/raw/location-lifetimes.rds: $(INBASE)/raw/input.rds
 
 $(INBASE)/filter/input.rds: $(INBASE)/raw/input.rds $(INDIR)/assumptions.json | $(INBASE)/filter
 
+$(INBASE)/filter/detail_input.rds: $(INBASE)/filter/input.rds
+
 $(INBASE)/filter/location_stats.rds: $(INBASE)/filter/input.rds
 
 $(INBASE)/filter/location_%.csv: filter/location_%.R $(INBASE)/filter/location_stats.rds
@@ -50,8 +52,16 @@ $(INBASE)/filter/location_%.csv: filter/location_%.R $(INBASE)/filter/location_s
 
 # clustering computations
 
-$(INBASE)/clustering/vonMisesFisher.rds: $(INBASE)/filter/input.rds | $(INBASE)/clustering
+CLUSTERDIMS := vonMisesFisher variability usage
+CLUSTERRDS := $(call wrap,$(INBASE)/clustering/,$(CLUSTERDIMS),.rds)
 
+$(CLUSTERRDS): $(INBASE)/filter/detail_input.rds | $(INBASE)/clustering
+
+$(INBASE)/clustering/userrefs.rds: $(INBASE)/filter/detail_input.rds $(CLUSTERRDS) | $(INBASE)/clustering
+$(INBASE)/clustering/locrefs.rds: $(CLUSTERRDS) | $(INBASE)/clustering
+$(INBASE)/clustering/uprefs.rds: $(INBASE)/filter/detail_input.rds $(INBASE)/clustering/locrefs.rds $(INBASE)/clustering/userrefs.rds | $(INBASE)/clustering
+
+# full cluster info
 
 # background processing
 
