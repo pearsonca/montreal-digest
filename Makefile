@@ -61,6 +61,8 @@ $(INBASE)/clustering/userrefs.rds: $(INBASE)/filter/detail_input.rds $(CLUSTERRD
 $(INBASE)/clustering/locrefs.rds: $(CLUSTERRDS) | $(INBASE)/clustering
 $(INBASE)/clustering/uprefs.rds: $(INBASE)/filter/detail_input.rds $(INBASE)/clustering/locrefs.rds $(INBASE)/clustering/userrefs.rds | $(INBASE)/clustering
 
+covertprecursors: $(INBASE)/clustering/userrefs.rds $(INBASE)/clustering/locrefs.rds $(INBASE)/clustering/uprefs.rds $(INBASE)/filter/location_pdf.csv
+
 # full cluster info
 
 # background processing
