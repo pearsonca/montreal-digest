@@ -67,11 +67,7 @@ covertprecursors: $(INBASE)/clustering/userrefs.rds $(INBASE)/clustering/locrefs
 
 # background processing
 
-INTERVALS := 15 30
-WINDOWS := 15 30
-# no window smaller than interval
-FORBID := 30/15
-SCORING := drop-only censor bonus
+include dims.mk
 
 define factorial1dir
 $(INBASE)/background/$(1): | $(INBASE)/background
@@ -85,15 +81,6 @@ define factorial2dir
 $(INBASE)/background/$(1): | $(INBASE)/background/$(dir $(1))
 	mkdir $$@
 endef
-
-BG-BASE-FACTORIAL :=
-
-$(foreach inter,$(INTERVALS),\
- $(foreach window,$(WINDOWS),\
-  $(eval BG-BASE-FACTORIAL += $(inter)/$(window))\
-))
-
-BG-BASE-FACTORIAL := $(filter-out $(FORBID),$(BG-BASE-FACTORIAL))
 
 nfmt = $(shell printf '%03d' $(1))
 
@@ -138,13 +125,6 @@ $(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/background/$(1
 endef
 
 $(foreach b,$(BG-BASE-FACTORIAL),$(eval $(call basebgrule,$(b))))
-
-BG-FACTORIAL :=
-
-$(foreach base,$(BG-BASE-FACTORIAL),\
- $(foreach score,$(SCORING),\
-  $(eval BG-FACTORIAL += $(base)/$(score))\
-))
 
 $(foreach b,$(BG-FACTORIAL),$(eval $(call factorial2dir,$(b))))
 
