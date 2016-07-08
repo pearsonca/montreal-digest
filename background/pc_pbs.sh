@@ -1,18 +1,19 @@
 cat <<EOF
 #!/bin/bash
-#PBS -r n
-#PBS -N $1
-#PBS -o $1.o
-#PBS -e $1.err
-#PBS -m a
-#PBS -M cap10@ufl.edu
-#PBS -l walltime=72:00:00
-#PBS -l nodes=1:ppn=8
-#PBS -l pmem=4gb
-#PBS -t 1-$3
+#SBATCH -r n
+#SBATCH --job-name=$1
+#SBATCH -o $1.o
+#SBATCH -e $1.err
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=cap10@ufl.edu
+#SBATCH -t 36:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH -N8
+#SBATCH --mem-per-cpu=4gb
+#SBATCH --array=1-$3
 
 module load gcc/5.2.0 R/3.2.2
-cd /scratch/lfs/cap10/montreal-digest
-tar=\$(printf 'input/digest/background/$2/pc/%03d.rds' \$PBS_ARRAYID)
+cd /ufrc/singer/cap10/montreal-digest
+tar=\$(printf 'input/digest/background/$2/pc/%03d.rds' \$SLURM_ARRAY_TASK_ID)
 make \$tar
 EOF

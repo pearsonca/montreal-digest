@@ -1,17 +1,18 @@
 cat <<EOF
 #!/bin/bash
-#PBS -r n
-#PBS -N $1
-#PBS -o $1.o
-#PBS -e $1.err
-#PBS -m a
-#PBS -M cap10@ufl.edu
-#PBS -l walltime=24:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -l pmem=16gb
+#SBATCH -r n
+#SBATCH --job-name=$1
+#SBATCH -o $1.o
+#SBATCH -e $1.err
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=cap10@ufl.edu
+#SBATCH -t 24:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH -N1
+#SBATCH --mem-per-cpu=16gb
 
 module load gcc/5.2.0 R/3.2.2
-cd /scratch/lfs/cap10/montreal-digest
+cd /ufrc/singer/cap10/montreal-digest
 tar=\$(printf 'input/digest/background/$2/agg/%03d.rds' $3)
 make \$tar
 EOF
