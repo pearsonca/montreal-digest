@@ -5,3 +5,4 @@ input
 .Rhistory
 *.err-*
 *.o-*
+*.pbs
