@@ -120,7 +120,7 @@ all-base-pbs: background/background-$(subst /,-,$(1))-base.pbs
 $(INBASE)/background/$(1)/base/%.rds: background/base.R $(INBASE)/background/$(1)/ints/%.rds | $(INBASE)/background/$(1)/base
 	$(R) $$^ > $$@
 
-.PRECIOUS: $(INBASE)/background/$(1)/base/*.rds
+.PRECIOUS: $(INBASE)/background/$(1)/base/%.rds
 
 endef
 
@@ -170,6 +170,8 @@ $(INBASE)/background/$(1)/agg/001.rds: background/aggregate.R $(INBASE)/backgrou
 $(foreach i,$(call seq2,2,$(call getlim,$(1))),\
 $(call aggtar,$(1),$(i))
 )
+
+.PRECIOUS: $(INBASE)/background/$(1)/agg/%.rds
 
 background/background-$(subst /,-,$(1))-agg.pbs: | background/agg_pbs.sh
 	$$| $$(notdir $$(basename $$@)) $(1) $(call getlim,$(1)) > $$@
